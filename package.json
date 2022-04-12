@@ -1,0 +1,20 @@
+{
+  "name": "@hexlet/code",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "RSS aggregator",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/panechek/frontend-project-lvl3.git"
+  },
+  "author": "Merkulova Anna",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/panechek/frontend-project-lvl3/issues"
+  },
+  "homepage": "https://github.com/panechek/frontend-project-lvl3#readme"
+}
