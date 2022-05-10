@@ -1,30 +1,31 @@
 import onChange from 'on-change';
-import * as yup from 'yup';
+import axios from 'axios';
+import i18next from 'i18next';
+import validate from './validator.js';
+import ru from './ru.js';
 
 export default () => {
+  const i18nInstance = i18next.createInstance();
+  i18nInstance.init({
+    lng: 'ru',
+    debug: false,
+    resources: {
+      ru,
+    },
+  });
+
   const state = {
     searchForm: {
       state: 'valid',
       feedback: '',
     },
-    fss: ['https://ru.hexlet.io/lessons.rss'],
-  };
-
-  const schema = yup.string().url().nullable().notOneOf(state.fss);
-
-  const validate = (value) => {
-    try {
-      schema.validateSync(value);
-      return 'ok';
-    } catch (e) {
-      console.log(e);
-      return e.message;
-    }
+    fss: [],
   };
 
   const inputSearchForm = document.querySelector('#url-input');
   const feedbackSearch = document.querySelector('.feedback');
   const formSearch = document.querySelector('form');
+  // const feed = document.querySelector('.posts');
   const watchedState = onChange(state, (path, value) => {
     feedbackSearch.textContent = value.feedback;
 
@@ -41,26 +42,32 @@ export default () => {
   });
 
   formSearch.addEventListener('submit', (e) => {
-    const validateResult = validate(inputSearchForm.value);
+    const validateResult = validate(inputSearchForm.value, state.fss, i18nInstance);
     console.log(validateResult);
     if (validateResult === 'ok') {
       state.fss.push(inputSearchForm.value);
+      axios.get(state.fss[0])
+        .then((response) => {
+          console.log(response);
+        })
+        .catch((error) => {
+          console.log(error);
+        });
       watchedState.searchForm = {
         state: 'valid',
-        feedback: 'RSS успешно загружен',
+        feedback: i18nInstance.t('sucsess'),
       };
     } else if (validateResult === 'this must be a valid URL') {
       watchedState.searchForm = {
         state: 'invalid',
-        feedback: 'Ссылка должна быть валидным URL',
+        feedback: validateResult,
       };
     } else {
       watchedState.searchForm = {
         state: 'invalid',
-        feedback: 'RSS уже существует',
+        feedback: validateResult,
       };
     }
-    console.log(state);
     e.preventDefault();
   });
 };
