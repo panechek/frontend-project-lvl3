@@ -9,12 +9,14 @@ const validate = (value, fs, i18next) => {
       notOneOf: () => ({ key: i18next.t('notOneOf') }),
     },
   });
+  const fssChanels = fs.map((chanel) => chanel.path);
+  const schema = yup.string().url().notOneOf(fssChanels);
 
-  const schema = yup.string().url().notOneOf(fs);
   try {
     schema.validateSync(value);
     return 'ok';
   } catch (err) {
+    console.log(err);
     return err.message.key;
   }
 };

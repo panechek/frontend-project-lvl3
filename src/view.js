@@ -1,8 +1,12 @@
 import onChange from 'on-change';
 import axios from 'axios';
 import i18next from 'i18next';
+import { uniqueId } from 'lodash';
 import validate from './validator.js';
 import ru from './ru.js';
+
+import renderFeeds from './renderFeeds.js';
+import renderPosts from './renderPosts.js';
 
 export default () => {
   const i18nInstance = i18next.createInstance();
@@ -15,59 +19,80 @@ export default () => {
   });
 
   const state = {
-    searchForm: {
-      state: 'valid',
-      feedback: '',
-    },
-    fss: [],
+    status: 'empty',
+    feeds: [],
+    posts: [],
   };
 
-  const inputSearchForm = document.querySelector('#url-input');
-  const feedbackSearch = document.querySelector('.feedback');
-  const formSearch = document.querySelector('form');
-  // const feed = document.querySelector('.posts');
-  const watchedState = onChange(state, (path, value) => {
-    feedbackSearch.textContent = value.feedback;
+  const elements = {
+    inputSearchForm: document.querySelector('#url-input'),
+    feedbackSearch: document.querySelector('.feedback'),
+    formSearch: document.querySelector('form'),
+    feed: document.querySelector('.feeds'),
+    posts: document.querySelector('.posts'),
+  };
+  const parser = new DOMParser();
 
-    if (value.state === 'invalid') {
-      inputSearchForm.classList.add('is-invalid');
-      feedbackSearch.classList.add('text-danger');
-    } else {
-      inputSearchForm.classList.remove('is-invalid');
-      feedbackSearch.classList.remove('text-danger');
-      feedbackSearch.classList.add('text-success');
-      inputSearchForm.value = '';
-      inputSearchForm.focus();
+  const watchedState = onChange(state, (path, value) => {
+    const n = () => {
+      watchedState.status = 'loaded';
+    };
+
+    switch (value) {
+      case 'validate':
+        const validateResult = validate(elements.inputSearchForm.value, state.feeds, i18nInstance);
+        if (validateResult === 'ok') {
+          watchedState.status = 'loading';
+        } else {
+          elements.feedbackSearch.textContent = validateResult;
+          elements.inputSearchForm.classList.add('is-invalid');
+          elements.feedbackSearch.classList.add('text-danger');
+        }
+        break;
+
+      case 'loading':
+        axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
+          .then((response) => {
+            const document = parser.parseFromString(response.data.contents, 'application/xml');
+            state.feeds.push({
+              id: uniqueId(),
+              path: elements.inputSearchForm.value,
+              title: document.querySelector('title').textContent,
+              description: document.querySelector('description').textContent,
+            });
+            elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
+            elements.inputSearchForm.classList.remove('is-invalid');
+            elements.feedbackSearch.classList.remove('text-danger');
+            elements.feedbackSearch.classList.add('text-success');
+            elements.inputSearchForm.value = '';
+            elements.inputSearchForm.focus();
+          })
+          .then(() => {
+            const feedList = renderFeeds(state.feeds);
+            elements.feed.innerHTML = '';
+            elements.feed.append(feedList);
+            watchedState.status = 'loaded';
+          })
+          .catch((e) => {
+            console.log(e);
+            elements.feedbackSearch.textContent = i18nInstance.t('invalidRss');
+            elements.inputSearchForm.classList.add('is-invalid');
+            elements.feedbackSearch.classList.add('text-danger');
+          });
+        break;
+
+      case 'loaded':
+        elements.posts.innerHTML = '';
+        renderPosts(state.feeds, elements);
+        state.status = 'pause';
+        setTimeout(n, 5000);
+        break;
+      default:
+        break;
     }
   });
-
-  formSearch.addEventListener('submit', (e) => {
-    const validateResult = validate(inputSearchForm.value, state.fss, i18nInstance);
-    console.log(validateResult);
-    if (validateResult === 'ok') {
-      state.fss.push(inputSearchForm.value);
-      axios.get(state.fss[0])
-        .then((response) => {
-          console.log(response);
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-      watchedState.searchForm = {
-        state: 'valid',
-        feedback: i18nInstance.t('sucsess'),
-      };
-    } else if (validateResult === 'this must be a valid URL') {
-      watchedState.searchForm = {
-        state: 'invalid',
-        feedback: validateResult,
-      };
-    } else {
-      watchedState.searchForm = {
-        state: 'invalid',
-        feedback: validateResult,
-      };
-    }
+  elements.formSearch.addEventListener('submit', (e) => {
+    watchedState.status = 'validate';
     e.preventDefault();
   });
 };
