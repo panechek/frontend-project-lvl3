@@ -10,5 +10,6 @@ parserOptions:
 rules: {
   no-console: 0,
   import/extensions: 0,
-  no-case-declarations: off
+  no-case-declarations: off,
+  no-param-reassign: off
 }
