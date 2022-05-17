@@ -56,19 +56,25 @@ export default () => {
       case 'loading':
         axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
           .then((response) => {
-            const document = parser.parseFromString(response.data.contents, 'application/xml');
-            state.feeds.push({
-              id: uniqueId(),
-              path: elements.inputSearchForm.value,
-              title: document.querySelector('title').textContent,
-              description: document.querySelector('description').textContent,
-            });
-            elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
-            elements.inputSearchForm.classList.remove('is-invalid');
-            elements.feedbackSearch.classList.remove('text-danger');
-            elements.feedbackSearch.classList.add('text-success');
-            elements.inputSearchForm.value = '';
-            elements.inputSearchForm.focus();
+            if (response.status >= 500) {
+              elements.feedbackSearch.textContent = i18nInstance.t('netMistake');
+              elements.inputSearchForm.classList.add('is-invalid');
+              elements.feedbackSearch.classList.add('text-danger');
+            } else {
+              const document = parser.parseFromString(response.data.contents, 'application/xml');
+              state.feeds.push({
+                id: uniqueId(),
+                path: elements.inputSearchForm.value,
+                title: document.querySelector('title').textContent,
+                description: document.querySelector('description').textContent,
+              });
+              elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
+              elements.inputSearchForm.classList.remove('is-invalid');
+              elements.feedbackSearch.classList.remove('text-danger');
+              elements.feedbackSearch.classList.add('text-success');
+              elements.inputSearchForm.value = '';
+              elements.inputSearchForm.focus();
+            }
           })
           .then(() => {
             const feedList = renderFeeds(state.feeds);
