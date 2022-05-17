@@ -91,6 +91,7 @@ export default () => {
             }
             elements.inputSearchForm.classList.add('is-invalid');
             elements.feedbackSearch.classList.add('text-danger');
+            watchedState.status = 'loaded';
           });
         break;
 
