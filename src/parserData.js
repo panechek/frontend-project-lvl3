@@ -10,6 +10,7 @@ export default (state, elements, i18nInstance) => {
     .catch(() => ({ value: 'mistake', name: feed.title })));
   const promise = Promise.all(promises);
   promise.then((response) => {
+    console.log(response)
     response.forEach((feedData) => {
       const document = parser.parseFromString(feedData.value.data.contents, 'application/xml');
       const posts = document.querySelectorAll('item');
@@ -35,6 +36,6 @@ export default (state, elements, i18nInstance) => {
     elements.posts.append(postList);
   }).catch(() => {
     elements.posts.innerHTML = '';
-    elements.posts.innerHTML = `<p>${i18nInstance.t('netMistake')}</p>`;
+    elements.posts.textContent = i18nInstance.t('netMistake');
   });
 };
