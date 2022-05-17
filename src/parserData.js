@@ -33,5 +33,8 @@ export default (state, elements, i18nInstance) => {
     const postList = renderPosts(_.sortBy(state.posts, 'time').reverse(), i18nInstance);
     elements.posts.innerHTML = '';
     elements.posts.append(postList);
-  });
+  }).catch(() => {
+    elements.posts.innerHTML = '';
+    elements.posts.innerHTML = i18nInstance.t('netMistake');
+  })
 };
