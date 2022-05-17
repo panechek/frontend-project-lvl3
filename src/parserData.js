@@ -35,6 +35,6 @@ export default (state, elements, i18nInstance) => {
     elements.posts.append(postList);
   }).catch(() => {
     elements.posts.innerHTML = '';
-    elements.posts.innerHTML = i18nInstance.t('netMistake');
+    elements.posts.innerHTML = `<p>${i18nInstance.t('netMistake')}</p>`;
   })
 };
