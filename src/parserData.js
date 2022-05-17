@@ -36,5 +36,5 @@ export default (state, elements, i18nInstance) => {
   }).catch(() => {
     elements.posts.innerHTML = '';
     elements.posts.innerHTML = `<p>${i18nInstance.t('netMistake')}</p>`;
-  })
+  });
 };
