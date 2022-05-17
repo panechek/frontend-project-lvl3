@@ -2,7 +2,7 @@ import axios from 'axios';
 import _ from 'lodash';
 import renderPosts from './renderPosts.js';
 
-export default (state, elements) => {
+export default (state, elements, i18nInstance) => {
   const links = state.posts.map((post) => post.link);
   const parser = new DOMParser();
   const promises = state.feeds.map((feed) => axios.get(`https://allorigins.hexlet.app/get?url=${feed.path}&disableCache=true`)
@@ -30,7 +30,7 @@ export default (state, elements) => {
       });
     });
   }).then(() => {
-    const postList = renderPosts(_.sortBy(state.posts, 'time').reverse());
+    const postList = renderPosts(_.sortBy(state.posts, 'time').reverse(), i18nInstance);
     elements.posts.innerHTML = '';
     elements.posts.append(postList);
   });

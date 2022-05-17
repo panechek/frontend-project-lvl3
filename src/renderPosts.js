@@ -1,4 +1,4 @@
-export default (posts) => {
+export default (posts, i18nInstance) => {
   const cardPosts = document.createElement('div');
   cardPosts.classList.add('card', 'border-0');
 
@@ -17,12 +17,18 @@ export default (posts) => {
     if ('name' in item) {
       const liPost = document.createElement('li');
       liPost.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0', 'py-5');
-      liPost.textContent = `${item.name}${item.text}`;
+      liPost.textContent = i18nInstance.t('netMistake');
     } else {
       const liPost = document.createElement('li');
       liPost.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
       const titlePost = document.createElement('a');
-      titlePost.classList.add('fw-bold');
+      if (item.viewed) {
+        titlePost.classList.remove('fw-bold');
+        titlePost.classList.add('fw-normal', 'link-secondary');
+      } else {
+        titlePost.classList.add('fw-bold');
+      }
+
       titlePost.setAttribute('href', item.link);
       titlePost.setAttribute('data-id', item.id);
       titlePost.setAttribute('target', '_blank');
@@ -32,7 +38,7 @@ export default (posts) => {
       liPost.append(titlePost);
       const buttonPost = document.createElement('button');
 
-      buttonPost.textContent = 'Просмотр';
+      buttonPost.textContent = i18nInstance.t('toSee');
       buttonPost.classList.add('btn', 'btn-outline-primary', 'btn-sm');
       buttonPost.setAttribute('type', 'button');
       buttonPost.setAttribute('data-id', item.id);

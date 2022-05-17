@@ -86,7 +86,7 @@ export default () => {
         break;
 
       case 'loaded':
-        parserData(state, elements);
+        parserData(state, elements, i18nInstance);
         state.status = 'pause';
         setTimeout(n, 5000);
         break;
@@ -98,9 +98,11 @@ export default () => {
   elements.modal.addEventListener('show.bs.modal', (e) => {
     const id = e.relatedTarget.getAttribute('data-id');
     const post = state.posts.filter((item) => item.id === id);
+    post[0].viewed = true;
     elements.modalTitle.textContent = post[0].title;
     elements.modalBody.textContent = post[0].description;
     elements.modalLink.setAttribute('href', post[0].link);
+    parserData(state, elements, i18nInstance);
   });
 
   elements.formSearch.addEventListener('submit', (e) => {

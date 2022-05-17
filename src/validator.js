@@ -1,6 +1,9 @@
 import * as yup from 'yup';
 
 const validate = (value, fs, i18next) => {
+  if (value === '') {
+    return i18next.t('emptyImput');
+  }
   yup.setLocale({
     string: {
       url: () => ({ key: i18next.t('url') }),
