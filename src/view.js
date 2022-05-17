@@ -84,8 +84,11 @@ export default () => {
             watchedState.status = 'loaded';
           })
           .catch((e) => {
-            console.log(e);
-            elements.feedbackSearch.textContent = i18nInstance.t('invalidRss');
+            if (e.message === 'Network Error') {
+              elements.feedbackSearch.textContent = i18nInstance.t('netMistake');
+            } else {
+              elements.feedbackSearch.textContent = i18nInstance.t('invalidRss');
+            }
             elements.inputSearchForm.classList.add('is-invalid');
             elements.feedbackSearch.classList.add('text-danger');
           });
