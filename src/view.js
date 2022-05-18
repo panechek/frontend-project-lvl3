@@ -39,43 +39,47 @@ export default () => {
   };
   const parser = new DOMParser();
   const watchedState = onChange(state, (path, value) => {
-    const n = () => {
-      watchedState.status = 'loading';
+    const n = (errorMoment) => {
+      watchedState.status = errorMoment;
     };
     if (path === 'status') {
       switch (value) {
         case 'validate':
           const validateResult = validate(elements.inputSearchForm.value, state.feeds, i18nInstance);
-          if (validateResult === 'ok') {
-            watchedState.status = 'loading';
+          if (validateResult !== 'ok') {
+            watchedState.error = validateResult;
           } else {
-            elements.feedbackSearch.textContent = validateResult;
-            elements.inputSearchForm.classList.add('is-invalid');
-            elements.feedbackSearch.classList.add('text-danger');
+            axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
+              .then((response) => {
+                if (response.data.status.http_code !== 200) {
+                  watchedState.error = 'invalidRSS';
+                } else {
+                  state.paths.push(elements.inputSearchForm.value);
+                  watchedState.status = 'loading';
+                }
+              })
+              .catch((e) => {
+                watchedState.error = e.message;
+              });
           }
           break;
 
         case 'loading':
-          axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
+          axios.get(`https://allorigins.hexlet.app/get?url=${state.paths[state.paths.length - 1]}&disableCache=true`)
             .then((response) => {
-              if (!response.data.status.http_code === 200) {
-                watchedState.error = 'invalidRSS';
-              } else {
-                state.paths.push(elements.inputSearchForm.value);
-                const document = parser.parseFromString(response.data.contents, 'application/xml');
-                state.feeds.push({
-                  id: uniqueId(),
-                  path: elements.inputSearchForm.value,
-                  title: document.querySelector('title').textContent,
-                  description: document.querySelector('description').textContent,
-                });
-                elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
-                elements.inputSearchForm.classList.remove('is-invalid');
-                elements.feedbackSearch.classList.remove('text-danger');
-                elements.feedbackSearch.classList.add('text-success');
-                elements.inputSearchForm.value = '';
-                elements.inputSearchForm.focus();
-              }
+              const document = parser.parseFromString(response.data.contents, 'application/xml');
+              state.feeds.push({
+                id: uniqueId(),
+                path: elements.inputSearchForm.value,
+                title: document.querySelector('title').textContent,
+                description: document.querySelector('description').textContent,
+              });
+              elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
+              elements.inputSearchForm.classList.remove('is-invalid');
+              elements.feedbackSearch.classList.remove('text-danger');
+              elements.feedbackSearch.classList.add('text-success');
+              elements.inputSearchForm.value = '';
+              elements.inputSearchForm.focus();
             })
             .then(() => {
               const feedList = renderFeeds(state.feeds);
@@ -92,28 +96,33 @@ export default () => {
         case 'loaded':
           parserData(state, elements, i18nInstance);
           state.status = 'pause';
-          setTimeout(n, 5000);
+          setTimeout(() => n('loaded'), 5000);
           break;
         default:
           break;
       }
     }
+
     if (path === 'error') {
+      elements.inputSearchForm.classList.add('is-invalid');
+      elements.feedbackSearch.classList.add('text-danger');
       switch (value) {
         case 'Network Error':
           elements.feedbackSearch.textContent = i18nInstance.t('netMistake');
-          elements.inputSearchForm.classList.add('is-invalid');
-          elements.feedbackSearch.classList.add('text-danger');
+          const errorMoment = state.status;
           state.status = 'pause';
           state.error = '';
-          setTimeout(n, 5000);
+          setTimeout(() => n(errorMoment), 5000);
           break;
         case 'invalidRSS':
           elements.feedbackSearch.textContent = i18nInstance.t('invalidRss');
-          elements.inputSearchForm.classList.add('is-invalid');
-          elements.feedbackSearch.classList.add('text-danger');
+          state.status = 'start';
+          state.error = '';
           break;
         default:
+          elements.feedbackSearch.textContent = state.error;
+          state.status = 'start';
+          state.error = '';
           break;
       }
     }
