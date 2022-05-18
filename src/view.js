@@ -51,7 +51,7 @@ export default () => {
           } else {
             axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
               .then((response) => {
-                if (response.data.status.http_code !== 200) {
+                if (parser.parseFromString(response.data.contents, 'application/xml').querySelector('rss') === null) {
                   watchedState.error = 'invalidRSS';
                 } else {
                   state.paths.push(elements.inputSearchForm.value);
