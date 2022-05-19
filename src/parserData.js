@@ -31,12 +31,6 @@ export default (state, elements, i18nInstance) => {
     });
   }).then(() => {
     const postList = renderPosts(_.sortBy(state.posts, 'time').reverse(), i18nInstance);
-    elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
-    elements.inputSearchForm.classList.remove('is-invalid');
-    elements.feedbackSearch.classList.remove('text-danger');
-    elements.feedbackSearch.classList.add('text-success');
-    elements.inputSearchForm.value = '';
-    elements.inputSearchForm.focus();
     elements.posts.innerHTML = '';
     elements.posts.append(postList);
   })
