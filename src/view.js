@@ -16,7 +16,7 @@ export default () => {
       ru,
     },
   });
-  
+
   const state = {
     status: 'empty',
     paths: [],
