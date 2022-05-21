@@ -5,7 +5,7 @@ import { uniqueId } from 'lodash';
 import validate from './validator.js';
 import ru from './ru.js';
 import parserData from './parserData.js';
-import renderFeeds from './renderFeeds.js';
+import render from './render.js';
 
 export default () => {
   const i18nInstance = i18next.createInstance();
@@ -42,93 +42,69 @@ export default () => {
     const n = (errorMoment) => {
       watchedState.status = errorMoment;
     };
-    if (path === 'status') {
-      switch (value) {
-        case 'validate':
-          const validateResult = validate(elements.inputSearchForm.value, state.feeds, i18nInstance);
-          if (validateResult !== 'ok') {
-            watchedState.error = validateResult;
-          } else {
-            axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
-              .then((response) => {
-                if (parser.parseFromString(response.data.contents, 'application/xml').querySelector('rss') === null) {
-                  watchedState.error = 'invalidRSS';
-                } else {
-                  state.paths.push(elements.inputSearchForm.value);
-                  watchedState.status = 'loading';
-                }
-              })
-              .catch((e) => {
-                watchedState.error = e.message;
-              });
-          }
-          break;
 
-        case 'loading':
-          axios.get(`https://allorigins.hexlet.app/get?url=${state.paths[state.paths.length - 1]}&disableCache=true`)
+    switch (value) {
+      case 'validate':
+        state.error = validate(elements.inputSearchForm.value, state.feeds, i18nInstance);
+        if (state.error !== 'ok') {
+          render('feedback', state, i18nInstance, elements);
+          state.status = 'empty';
+        } else {
+          axios.get(`https://allorigins.hexlet.app/get?url=${elements.inputSearchForm.value}&disableCache=true`)
             .then((response) => {
-              if (response.status === 404) {
-                throw new Error('Network Error');
+              if (parser.parseFromString(response.data.contents, 'application/xml').querySelector('rss') === null) {
+                state.error = i18nInstance.t('invalidRss');
+                render('feedback', state, i18nInstance, elements);
+                state.status = 'empty';
               } else {
-                const document = parser.parseFromString(response.data.contents, 'application/xml');
-                state.feeds.push({
-                  id: uniqueId(),
-                  path: elements.inputSearchForm.value,
-                  title: document.querySelector('title').textContent,
-                  description: document.querySelector('description').textContent,
-                });
-                elements.feedbackSearch.textContent = i18nInstance.t('sucsess');
-                elements.inputSearchForm.classList.remove('is-invalid');
-                elements.feedbackSearch.classList.remove('text-danger');
-                elements.feedbackSearch.classList.add('text-success');
-                elements.inputSearchForm.value = '';
-                elements.inputSearchForm.focus();
+                state.paths.push(elements.inputSearchForm.value);
+                watchedState.status = 'loading';
               }
             })
-            .then(() => {
-              const feedList = renderFeeds(state.feeds);
-              elements.feed.innerHTML = '';
-              elements.feed.append(feedList);
-              elements.modal.setAttribute('wfd-invisible', 'true');
-              watchedState.status = 'loaded';
-            })
-            .catch((e) => {
-              watchedState.error = e.message;
+            .catch(() => {
+              state.status = 'empty';
+              state.error = 'netMistake';
+              render('feedback', state, i18nInstance, elements);
             });
-          break;
+        }
+        break;
 
-        case 'loaded':
-          parserData(state, elements, i18nInstance);
-          state.status = 'pause';
-          setTimeout(() => n('loaded'), 5000);
-          break;
-        default:
-          break;
-      }
-    }
+      case 'loading':
+        axios.get(`https://allorigins.hexlet.app/get?url=${state.paths[state.paths.length - 1]}&disableCache=true`)
+          .then((response) => {
+            if (response.status === 404) {
+              throw new Error('netMistake');
+            } else {
+              const document = parser.parseFromString(response.data.contents, 'application/xml');
+              state.feeds.push({
+                id: uniqueId(),
+                path: elements.inputSearchForm.value,
+                title: document.querySelector('title').textContent,
+                description: document.querySelector('description').textContent,
+              });
+              state.error = 'sucsess';
+              render('feedback', state, i18nInstance, elements);
+              elements.inputSearchForm.value = '';
+              elements.inputSearchForm.focus();
+            }
+          })
+          .then(() => {
+            render('feed', state, i18nInstance, elements);
+            watchedState.status = 'loaded';
+          })
+          .catch(() => {
+            state.error = 'netMistake';
+            render('feedback', state, i18nInstance, elements);
+          });
+        break;
 
-    if (path === 'error') {
-      elements.inputSearchForm.classList.add('is-invalid');
-      elements.feedbackSearch.classList.add('text-danger');
-      switch (value) {
-        case 'Network Error':
-          elements.feedbackSearch.textContent = i18nInstance.t('netMistake');
-          const errorMoment = state.status;
-          state.status = 'pause';
-          state.error = '';
-          setTimeout(() => n(errorMoment), 5000);
-          break;
-        case 'invalidRSS':
-          elements.feedbackSearch.textContent = i18nInstance.t('invalidRss');
-          state.status = 'start';
-          state.error = '';
-          break;
-        default:
-          elements.feedbackSearch.textContent = state.error;
-          state.status = 'start';
-          state.error = '';
-          break;
-      }
+      case 'loaded':
+        parserData(state, elements, i18nInstance);
+        state.status = 'pause';
+        setTimeout(() => n('loaded'), 5000);
+        break;
+      default:
+        break;
     }
   });
 

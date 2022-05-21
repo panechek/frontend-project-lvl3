@@ -1,6 +1,6 @@
 import axios from 'axios';
 import _ from 'lodash';
-import renderPosts from './renderPosts.js';
+import render from './render.js';
 
 export default (state, elements, i18nInstance) => {
   const links = state.posts.map((post) => post.link);
@@ -30,13 +30,10 @@ export default (state, elements, i18nInstance) => {
       });
     });
   }).then(() => {
-    const postList = renderPosts(_.sortBy(state.posts, 'time').reverse(), i18nInstance);
-    elements.posts.innerHTML = '';
-    elements.posts.append(postList);
+    render('post', state, i18nInstance, elements);
   })
     .catch(() => {
-      elements.inputSearchForm.classList.add('is-invalid');
-      elements.feedbackSearch.classList.add('text-danger');
-      elements.feedbackSearch.textContent = i18nInstance.t('netMistake');
+      state.error = 'netMistake';
+      render('feedback', state, i18nInstance, elements);
     });
 };
