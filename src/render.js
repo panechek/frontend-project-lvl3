@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 export default (renderField, state, i18nInstance, elements) => {
   if (renderField === 'feedback') {
     if (state.error === 'sucsess') {
@@ -61,7 +63,7 @@ export default (renderField, state, i18nInstance, elements) => {
 
     const ulPosts = document.createElement('ul');
     ulPosts.classList.add('list-group', 'border-0', 'rounded-0');
-    state.posts.forEach((item) => {
+    _.sortBy(state.posts, 'time').reverse().forEach((item) => {
       const liPost = document.createElement('li');
       liPost.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-start', 'border-0', 'border-end-0');
       const titlePost = document.createElement('a');
